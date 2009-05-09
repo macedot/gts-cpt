@@ -1,0 +1,37 @@
+#!/bin/bash
+INPUT_DIR=../data
+OUTPUT_DIR=out
+EXEC_PROG=debug/gts-cpt
+DEBUG_LOG=run-all-`date +%Y%m%d%H%M%S`.log
+
+echo "Log file: $DEBUG_LOG"
+
+touch $DEBUG_LOG
+tail -f $DEBUG_LOG &
+
+echo "Cleaning the house..." >> $DEBUG_LOG
+./clean
+
+mkdir $OUTPUT_DIR 2>/dev/null
+
+echo "Building '$EXEC_PROG'..." >> $DEBUG_LOG
+if `make 1> /dev/null`; then
+	echo "Global execution start: `date +%Y/%m/%d` `date +%H:%M:%S`" >> $DEBUG_LOG
+	for m in $INPUT_DIR/*.gts ; do 
+		if [ -f $m ] ; then
+			FILENAME=`basename $m`
+			OUTNAME=`basename $m .gts`
+			echo "" >> $DEBUG_LOG
+			echo "-- $EXEC_PROG < $INPUT_DIR/$FILENAME > $OUTPUT_DIR/$OUTNAME.out" >> $DEBUG_LOG
+			echo "Begin [`date +%Y/%m/%d` `date +%H:%M:%S.%N`]" >> $DEBUG_LOG
+			$EXEC_PROG < $INPUT_DIR/$FILENAME 1> $OUTPUT_DIR/$OUTNAME.out 2>> $DEBUG_LOG
+			echo "End   [`date +%Y/%m/%d` `date +%H:%M:%S.%N`]" >> $DEBUG_LOG
+		fi
+	done
+	echo "run-all: done!" >> $DEBUG_LOG
+else
+	echo "Did not make it... =(" >> $DEBUG_LOG
+fi
+
+exit 0
+
