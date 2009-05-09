@@ -1,0 +1,18 @@
+#!/bin/bash
+INPUT_DIR=../data
+EXEC_PROG=debug/gts-cpt
+
+echo "Building '$EXEC_PROG'..."
+if `make 1> /dev/null`; then
+	FILENAME=`basename $1`
+	echo
+	echo "-- $EXEC_PROG < $INPUT_DIR/$FILENAME";
+	echo "Begin [`date +%Y/%m/%d` `date +%H:%M:%S.%N`]";
+	$EXEC_PROG < $INPUT_DIR/$FILENAME
+	echo "End   [`date +%Y/%m/%d` `date +%H:%M:%S.%N`]";
+else
+	echo "Did not make it... =("
+fi
+
+exit 0
+

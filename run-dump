@@ -1,0 +1,23 @@
+#!/bin/bash
+INPUT_DIR=../data
+OUTPUT_DIR=out
+EXEC_PROG=debug/gts-cpt
+
+mkdir $OUTPUT_DIR 2>/dev/null
+echo "Building '$EXEC_PROG'..."
+if `make 1> /dev/null`; then
+	if [ -f $m ] ; then
+		FILENAME=`basename $1`
+		OUTNAME=`basename $1 .gts`
+		echo "";
+		echo "-- $EXEC_PROG < $INPUT_DIR/$FILENAME > $OUTPUT_DIR/$OUTNAME";
+		echo "Begin [`date +%Y/%m/%d` `date +%H:%M:%S.%N`]";
+		$EXEC_PROG < $INPUT_DIR/$FILENAME 1> $OUTPUT_DIR/$FILENAME;
+		echo "End   [`date +%Y/%m/%d` `date +%H:%M:%S.%N`]";
+	fi
+else
+	echo "Did not make it... =("
+fi
+
+exit 0
+
