@@ -11,8 +11,13 @@ TODO:
 
 #include "gtscpt.h"
 #include "cpt.h"
+#include "export.h"
 
 #define CHECK_DELTA
+
+// If defined, use an runtime generated sphere as input example wit the given geodesical order;
+// if > 8 -> visit cant plot pseudocolor (mem > 4GiB (?) !!)
+//#define INPUT_RUNTIME_SPHERE    8
 
 // "The quality of a triangle is defined as the ratio of its surface
 // to its perimeter relative to this same ratio for an equilateral
@@ -27,10 +32,12 @@ static      gboolean  verbose             = TRUE;
 int main(int argc, char *argv[])
 {
 	SignedDistance  *pSignedDistance = NULL;
-//	GtsFile     *fp = NULL;
 	time_t      theClock;
 	time_t      timeCpt[3];
 	size_t     i;
+#ifndef INPUT_RUNTIME_SPHERE	
+	GtsFile     *fp = NULL;
+#endif
 
 	try {
 
@@ -52,7 +59,8 @@ int main(int argc, char *argv[])
 		////////////////////////////////////////////////////////////////////////
 
 		pSignedDistance->pSurface = gts_surface_new(gts_surface_class(), gts_face_class(), gts_edge_class(), gts_vertex_class());
-#if 0
+		
+#ifndef INPUT_RUNTIME_SPHERE
 		fp = gts_file_new(stdin);
 		if(gts_surface_read(pSignedDistance->pSurface, fp))
 		{
@@ -60,9 +68,8 @@ int main(int argc, char *argv[])
 			fprintf(stderr, "stdin:%d:%d: %pSignedDistance->pSurface\n", fp->line, fp->pos, fp->error);
 			return 1; // failure
 		}
-#endif
-
-		guint geodesation_order = 7;
+#else
+		guint geodesation_order = INPUT_RUNTIME_SPHERE;
 
 		if(verbose)
 		{
@@ -85,6 +92,7 @@ int main(int argc, char *argv[])
 
 		fflush(stdout);
 		fflush(stderr);
+#endif
 
 		////////////////////////////////////////////////////////////////////////
 
@@ -144,12 +152,10 @@ int main(int argc, char *argv[])
 		pSignedDistance->delta[1] = (1.0 + 0.05) * pSignedDistance->delta[0];
 		pSignedDistance->delta[2] = (1.0 - 0.05) * pSignedDistance->delta[0];
 		
-		//pSignedDistance->sigma = 3.0 * cpt_min(pSignedDistance->delta[0], cpt_min(pSignedDistance->delta[1], pSignedDistance->delta[2]));
-		pSignedDistance->sigma = 2.0 * cpt_min(pSignedDistance->delta[0], cpt_min(pSignedDistance->delta[1], pSignedDistance->delta[2]));
+		pSignedDistance->sigma = 3.0 * cpt_min(pSignedDistance->delta[0], cpt_min(pSignedDistance->delta[1], pSignedDistance->delta[2]));
 
 		gdouble  delta_max = cpt_max(pSignedDistance->delta[0], cpt_max(pSignedDistance->delta[1], pSignedDistance->delta[2]));
 		pSignedDistance->distCut = cpt_get_dist_cut(size_sup, delta_max);
-//		pSignedDistance->distCut = cpt_round_value(pSignedDistance->distCut, FLT_EPSILON);
 		pSignedDistance->distMax = cpt_get_dist_max(pSignedDistance->distCut, delta_max);
 
 		if(verbose)
@@ -192,8 +198,8 @@ int main(int argc, char *argv[])
 		{
 			// make sure we have some space between surface and the box boundary;
 			size_box = fabs(pSignedDistance->coordMax[i] - pSignedDistance->coordMin[i]);
-			pSignedDistance->coordMin[i]-= size_box;
-			pSignedDistance->coordMax[i]+= size_box;
+			pSignedDistance->coordMin[i]-= 0.5*size_box;
+			pSignedDistance->coordMax[i]+= 0.5*size_box;
 			// ... but assert the maximun coord build a box with
 			// a dimention multiple of the delta in this axis;
 			pSignedDistance->size[i]     = (size_t)ceil(fabs(pSignedDistance->coordMax[i] - pSignedDistance->coordMin[i]) / pSignedDistance->delta[i]);
@@ -286,6 +292,26 @@ int main(int argc, char *argv[])
 				printf("# avg time: [%+1.8f sec];\n", (timeCpt[0] + timeCpt[1] + timeCpt[2]) / (DBL_CLOCKS_PER_SEC * maxLoop));
 		}
 
+		////////////////////////////////////////////////////////////////////////
+
+#if 1
+		if(verbose)
+		{
+			printf("#\n");
+			printf("# Normalizing distances...");
+		}
+		for(i = 0; i < mesh_size; i++)
+		{
+			pSignedDistance->value[ i ] /= pSignedDistance->distMax;
+		}
+		if(verbose)
+		{
+			printf("done!\n");
+		}
+#endif
+
+		////////////////////////////////////////////////////////////////////////
+
 		fflush(stdout);
 		fflush(stderr);
 
@@ -300,24 +326,6 @@ int main(int argc, char *argv[])
 			printf("# Total points in the interface: [%lu ; %+1.8f sec];\n", qt_pts, theClock / DBL_CLOCKS_PER_SEC);
 		}
 
-#if 0
-		theClock = clock();
-		qt_pts = cpt_eulerian_mesh_write_ze(pSignedDistance, pSignedDistance->pSurface, "out/eulerianmesh_ze.silo");
-		theClock = (clock() - theClock);
-		if(verbose)
-		{
-			printf("#\n");
-			printf("# Total points inside surface: [%lu ; %+1.8f sec];\n", qt_pts, theClock / DBL_CLOCKS_PER_SEC);
-		}
-#endif
-		////////////////////////////////////////////////////////////////////////
-#if 0
-		printf("#\n");
-		for(mesh_pos = 0; mesh_pos < mesh_size; mesh_pos++)
-		{
-			printf("#\t%lu = %+1.8f\n", mesh_pos, pSignedDistance->value[mesh_pos]);
-		}
-#endif
 		////////////////////////////////////////////////////////////////////////
 
 		FILE* fpVtk = fopen("out/surface.vtk", "w+b");

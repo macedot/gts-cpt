@@ -1,14 +1,35 @@
 #!/bin/bash
-INPUT_DIR=../data
 EXEC_PROG=debug/gts-cpt
+INPUT_FILE=$1
 
 echo "Building '$EXEC_PROG'..."
 if `make 1> /dev/null`; then
-	FILENAME=`basename $1`
+	if [ -f $INPUT_FILE ]; then
+		FILENAME=`basename $INPUT_FILE`
+		EXTENSION=`echo "$FILENAME"|awk -F . '{print $NF}'`
+		if [ $EXTENSION == "stl" ]; then
+			TMP_FILE=/tmp/`basename $INPUT_FILE .stl`-stl.gts
+			echo "-> Converting STL file '$INPUT_FILE' to GTS file '$TMP_FILE'"
+			stl2gts	< $INPUT_FILE > $TMP_FILE
+			if [ $? -ne 0 ]; then
+				exit $?
+			fi
+			INPUT_FILE=$TMP_FILE
+		fi
+
+		TMP_FILE=/tmp/`basename $INPUT_FILE .gts`-center.gts
+		echo "-> Normalizing : '$TMP_FILE'"
+		../gts/examples/transform -o < $INPUT_FILE > $TMP_FILE
+		if [ $? -ne 0 ]; then
+			exit $?
+		fi
+		INPUT_FILE=$TMP_FILE
+	fi
+
 	echo
-	echo "-- $EXEC_PROG < $INPUT_DIR/$FILENAME";
+	echo "-- $EXEC_PROG < $INPUT_FILE";
 	echo "Begin [`date +%Y/%m/%d` `date +%H:%M:%S.%N`]";
-	$EXEC_PROG < $INPUT_DIR/$FILENAME
+	$EXEC_PROG < $INPUT_FILE
 	echo "End   [`date +%Y/%m/%d` `date +%H:%M:%S.%N`]";
 else
 	echo "Did not make it... =("

@@ -1,6 +1,15 @@
 #ifndef __CPT_H__
 #define __CPT_H__
 
+typedef gdouble (*CptFuncDistance)(GtsPoint* mesh_point, gpointer data);
+
+typedef struct param_distance_function {
+	gpointer    pNormal;
+	gpointer    pObj;
+	GtsPoint*   pSurfacePoint;
+} ParamDistFunc;
+
+
 #define BOX_BEGIN(box_begin, point, normal, sign) \
 	(box_begin)[0] = cpt_min((box_begin)[0], cpt_min((point)->x, (point)->x + (sign) * (normal)[0])); \
 	(box_begin)[1] = cpt_min((box_begin)[1], cpt_min((point)->y, (point)->y + (sign) * (normal)[1])); \

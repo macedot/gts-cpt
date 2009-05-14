@@ -1,5 +1,5 @@
 # Source, Executable, Includes, Library Defines
-SRC  = src/main.cpp src/gtstools.cpp src/cpt.cpp
+SRC  = src/main.cpp src/gtstools.cpp src/cpt.cpp src/export.cpp
 OBJ  = $(SRC:.cpp=.o)
 LIBS = -lgts -lglib-2.0 -lsilo -lm -ldl
 EXE  = debug/gts-cpt
