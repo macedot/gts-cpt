@@ -3,15 +3,14 @@
 // for use with c++ code see : http://geneura.ugr.es/~jmerelo/c++-faq/mixing-c-and-cpp.html
 // base code structure from Jose Eduardo;
 
-/*
-TODO:
-- Dominio (omega) [A1, B1] x [A2, B2] x [A3, B3] fornecido externamente;
-- encaixar box da superficie na malha euleriana que JAH EXISTE!!!
-*/
-
 #include "gtscpt.h"
 #include "cpt.h"
 #include "export.h"
+#include <getopt.h>
+
+#ifdef HAVE_UNISTD_H
+#  include <unistd.h>
+#endif /* HAVE_UNISTD_H */
 
 #define CHECK_DELTA
 
@@ -28,16 +27,20 @@ static const gdouble  DBL_CLOCKS_PER_SEC  = (double)CLOCKS_PER_SEC;
        const gdouble  MIN_DELTA_MESH      = 0.001;
        const gdouble  size_sup            = 2.0;   // suporte da delta de dirac;
 static      gboolean  verbose             = TRUE;
+static      gboolean  normalize           = FALSE;
+static         guint  geodesation_order   = 0;
 
 int main(int argc, char *argv[])
 {
 	SignedDistance  *pSignedDistance = NULL;
 	time_t      theClock;
 	time_t      timeCpt[3];
-	size_t     i;
-#ifndef INPUT_RUNTIME_SPHERE	
-	GtsFile     *fp = NULL;
-#endif
+	GtsFile*    fp;
+	GtsVector   beginMesh = { 0.0 , 0.0 , 0.0 };     // begin of eulerian mesh (x,y,z)
+	GtsVector   endMesh   = { 0.0 , 0.0 , 0.0 };     // end of eulerian mesh (x,y,z)
+	SizeVector  sizeMesh  = {   0 ,   0 ,   0 };     // site in delta unit;
+	size_t      i;
+	int         c = 0;
 
 	try {
 
@@ -45,7 +48,117 @@ int main(int argc, char *argv[])
 			g_warning("cannot set locale to POSIX");
 
 		////////////////////////////////////////////////////////////////////////
-			
+
+		static struct option long_options[] = {
+			{"begin-x"  , required_argument, NULL, 'A'},
+			{"begin-y"  , required_argument, NULL, 'B'},
+			{"begin-z"  , required_argument, NULL, 'C'},
+			{"end-x"    , required_argument, NULL, 'D'},
+			{"end-y"    , required_argument, NULL, 'E'},
+			{"end-z"    , required_argument, NULL, 'F'},
+			{"size-x"   , required_argument, NULL, 'G'},
+			{"size-y"   , required_argument, NULL, 'H'},
+			{"size-z"   , required_argument, NULL, 'I'},
+			{"normalize", no_argument      , NULL, 'o'},
+			{"sphere"   , required_argument, NULL, 's'},
+			{"verbose"  , no_argument      , NULL, 'v'},
+			{"help"     , no_argument      , NULL, 'h'},
+			{ NULL }
+		};
+		int option_index = 0;
+
+		/* parse options using getopt */
+		while (c != EOF) {
+			switch ((c = getopt_long (argc, argv, "A:B:C:D:E:F:G:H:I:os:vh", long_options, &option_index))) {
+				case 'A': /* x */
+					beginMesh[0] = (gdouble) atof (optarg);
+					break;
+				case 'B': /* sy */
+					beginMesh[1] = (gdouble) atof (optarg);
+					break;
+				case 'C': /* sz */
+					beginMesh[2] = (gdouble) atof (optarg);
+					break;
+				case 'D': /* x */
+					endMesh[0] = (gdouble) atof (optarg);
+					break;
+				case 'E': /* sy */
+					endMesh[1] = (gdouble) atof (optarg);
+					break;
+				case 'F': /* sz */
+					endMesh[2] = (gdouble) atof (optarg);
+					break;
+				case 'G': /* sx */
+					sizeMesh[0] = (size_t) atoi (optarg);
+					break;
+				case 'H': /* sy */
+					sizeMesh[1] = (size_t) atoi (optarg);
+					break;
+				case 'I': /* sz */
+					sizeMesh[2] = (size_t) atoi (optarg);
+					break;
+				case 'o': /* normalize */
+					normalize = TRUE;
+					break;
+				case 's': /* verbose */
+					geodesation_order = (guint) atoi (optarg);
+					if( geodesation_order <= 0 )
+					{
+						fputs("gtscpt: you must supply a valid integer great than zero value as geodesation order parameter!\n", stderr);
+						return 1; // failure
+					}
+					break;
+				case 'v': /* verbose */
+					verbose = TRUE;
+					break;
+				case 'h': /* help */
+				case '?': /* wrong options */
+					fprintf (stderr,
+					"Usage: gts-cpt [OPTION] < file.gts\n"
+					"CPT using the GTS library.\n"
+					"\n"
+
+					"  --begin-x VALUE              begin of eulerian mesh (x)\n"
+					"  --begin-y VALUE              begin of eulerian mesh (x)\n"
+					"  --begin-z VALUE              begin of eulerian mesh (x)\n"
+
+					"  --end-x VALUE                end of eulerian mesh (x)\n"
+					"  --end-y VALUE                end of eulerian mesh (x)\n"
+					"  --end-z VALUE                end of eulerian mesh (x)\n"
+
+					"  --size-x VALUE               number of cells for X axis\n"
+					"  --size-y VALUE               number of cells for Y axis\n"
+					"  --size-z VALUE               number of cells for Z axis\n"
+
+					"  --normalize                  fit the resulting surface in a cube of\n"
+					"                               size 1 centered at the origin\n"
+
+					"  --verbose                    print statistics about the surface\n"
+					"  --help                       display this help and exit\n"
+					"\n"
+					"Reports bugs to tmacedo@usp.br\n");
+					return (c != 'h'); /* success or failure */
+				}
+		}
+
+		////////////////////////////////////////////////////////////////////////		
+
+		// do not allow 2D eulerian mesh ( no reason in special... just i dont care about it, yet =] );
+		if ( beginMesh[0] >= endMesh[0] || beginMesh[1] >= endMesh[1] || beginMesh[2] >= endMesh[2])
+		{
+			fputs("gtscpt: you must correctly especify the eulerian mesh!\n", stderr);
+			return 1; // failure
+		}
+
+		// valid number of cells in each eulerian mesh axis is a must!		
+		if ( sizeMesh[0] <= 0 || sizeMesh[1] <= 0 || sizeMesh[2] <= 0)
+		{
+			fputs("gtscpt: you must correctly especify the size of eulerian mesh!\n", stderr);
+			return 1; // failure
+		}
+
+		////////////////////////////////////////////////////////////////////////
+
 		// @TODO
 		pSignedDistance = new SignedDistance;
 		memset(pSignedDistance, 0, sizeof(SignedDistance));
@@ -59,40 +172,42 @@ int main(int argc, char *argv[])
 		////////////////////////////////////////////////////////////////////////
 
 		pSignedDistance->pSurface = gts_surface_new(gts_surface_class(), gts_face_class(), gts_edge_class(), gts_vertex_class());
-		
-#ifndef INPUT_RUNTIME_SPHERE
-		fp = gts_file_new(stdin);
-		if(gts_surface_read(pSignedDistance->pSurface, fp))
-		{
-			fputs("gtscpt: the file on standard input is not a valid GTS file\n", stderr);
-			fprintf(stderr, "stdin:%d:%d: %pSignedDistance->pSurface\n", fp->line, fp->pos, fp->error);
-			return 1; // failure
-		}
-#else
-		guint geodesation_order = INPUT_RUNTIME_SPHERE;
 
-		if(verbose)
+		if(geodesation_order > 0)
 		{
-			printf("#\n");
-			printf("# Generation unit sphere (geodesation_order = %d)...", geodesation_order);
+			if(verbose)
+			{
+				printf("#\n");
+				printf("# Generation unit sphere (geodesation_order = %d)...", geodesation_order);
+
+				fflush(stdout);
+				fflush(stderr);
+			}
+
+			theClock = clock();
+			gts_surface_generate_sphere(pSignedDistance->pSurface, geodesation_order);
+			theClock = (clock() - theClock);
+
+			if(verbose)
+			{
+				printf(" done [%+1.8f]\n", theClock / DBL_CLOCKS_PER_SEC);
+				printf("#\n");
+			}
 
 			fflush(stdout);
 			fflush(stderr);
 		}
-
-		theClock = clock();
-		gts_surface_generate_sphere(pSignedDistance->pSurface, geodesation_order);
-		theClock = (clock() - theClock);
-
-		if(verbose)
+		else
 		{
-			printf(" done [%+1.8f]\n", theClock / DBL_CLOCKS_PER_SEC);
-			printf("#\n");
-		}
+			fp = gts_file_new(stdin);
+			if(gts_surface_read(pSignedDistance->pSurface, fp))
+			{
+				fputs("gtscpt: the file on standard input is not a valid GTS file\n", stderr);
+				fprintf(stderr, "stdin:%d:%d: %p\n", fp->line, fp->pos, fp->error);
+				return 1; // failure
+			}
 
-		fflush(stdout);
-		fflush(stderr);
-#endif
+		}
 
 		////////////////////////////////////////////////////////////////////////
 
@@ -102,8 +217,33 @@ int main(int argc, char *argv[])
 			printf("#   Total area: %g\n", gts_surface_area(pSignedDistance->pSurface));
 		}
 
+		if (normalize) 
+		{
+			GtsBBox * bb = gts_bbox_surface (gts_bbox_class (), pSignedDistance->pSurface);
+			gdouble scale = bb->x2 - bb->x1;
+			GtsMatrix * sc;
+
+			if (bb->y2 - bb->y1 > scale) scale = bb->y2 - bb->y1;
+			if (bb->z2 - bb->z1 > scale) scale = bb->z2 - bb->z1;
+			if (scale > 0.) scale = 1./scale;
+			else scale = 1.;
+			sc = gts_matrix_identity (NULL);
+			sc[0][3] = - (bb->x1 + bb->x2)/2.;
+			sc[1][3] = - (bb->y1 + bb->y2)/2.;
+			sc[2][3] = - (bb->z1 + bb->z2)/2.;
+			gts_surface_foreach_vertex (pSignedDistance->pSurface, (GtsFunc) gts_point_transform, sc);
+			sc[0][0] = sc[1][1] = sc[2][2] = scale;    
+			sc[0][3] = sc[1][3] = sc[2][3] = 0.;
+			gts_surface_foreach_vertex (pSignedDistance->pSurface, (GtsFunc) gts_point_transform, sc);
+			gts_matrix_destroy (sc);
+
+
+			gts_surface_print_stats(pSignedDistance->pSurface, stdout);
+			printf("#   Total area (normalized): %g\n", gts_surface_area(pSignedDistance->pSurface));
+		}
+
 		////////////////////////////////////////////////////////////////////////
-		
+
 		// test if surface is a closed and orientable manifold.
 		// we don't need to test if pSignedDistance->pSurface is a manifold since both tests below implies that.
 		if(!gts_surface_is_closed(pSignedDistance->pSurface))
@@ -138,20 +278,29 @@ int main(int argc, char *argv[])
 			fprintf(stderr, ">>> WARNING: some trangle have quality ratio below minimum triangle quality parameter;\n");
 		}
 
-		// @TODO:Definir funcoes usadas como parametro;
+		// @TODO: Definir funcoes usadas como parametro;
 		// @TODO: Melhorar o objeto discretizado tal que:
 		//	aresta media menor que deltas da malha euleriana (faixa para tamanhos de arestas);
 		// gts_surface_refine(pSignedDistance->pSurface, NULL, NULL, NULL, NULL, refine_stop, refine_stop_param);
 
 		////////////////////////////////////////////////////////////////////////
 
+		for(i = 0; i < 3; i++)
+		{
+			pSignedDistance->coordMin[i] = beginMesh[i];
+			pSignedDistance->coordMax[i] = endMesh[i];
+			pSignedDistance->size[i]     = sizeMesh[i];
+			pSignedDistance->delta[i]    = fabs( (pSignedDistance->coordMax[i] - pSignedDistance->coordMin[i]) / (gdouble)pSignedDistance->size[i] );
+		}
+
+#if 0
 		// Use the minimum valid delta;
 		pSignedDistance->delta[0] = 1.1 * (qstats.edge_length.mean + 2.0*qstats.edge_length.stddev);
 		pSignedDistance->delta[0] = cpt_round_value(pSignedDistance->delta[0], MIN_DELTA_MESH);
-
 		pSignedDistance->delta[1] = (1.0 + 0.05) * pSignedDistance->delta[0];
 		pSignedDistance->delta[2] = (1.0 - 0.05) * pSignedDistance->delta[0];
-		
+#endif
+
 		pSignedDistance->sigma = 3.0 * cpt_min(pSignedDistance->delta[0], cpt_min(pSignedDistance->delta[1], pSignedDistance->delta[2]));
 
 		gdouble  delta_max = cpt_max(pSignedDistance->delta[0], cpt_max(pSignedDistance->delta[1], pSignedDistance->delta[2]));
@@ -163,12 +312,14 @@ int main(int argc, char *argv[])
 			printf("#\tdistCut = { %+1.8f }; \n", pSignedDistance->distCut);
 			printf("#\tdistMax = { %+1.8f }; \n", pSignedDistance->distMax);
 			printf("#\tsigma   = { %+1.8f }; \n", pSignedDistance->sigma);
+
+			fflush(stdout);
+			fflush(stderr);
 		}
-		
+
 		////////////////////////////////////////////////////////////////////////
 
-		fflush(stdout);
-		fflush(stderr);
+#if 0		
 
 		// find the box than contains the surface;
 		theClock = clock();
@@ -188,7 +339,7 @@ int main(int argc, char *argv[])
 		////////////////////////////////////////////////////////////////////////
 
 		// @TODO : encaixar box na malha euleriana;
-		
+
 		// POR HORA FAREMOS COMO ABAIXO;
 
 		gdouble size_box;
@@ -206,13 +357,14 @@ int main(int argc, char *argv[])
 			pSignedDistance->coordMax[i] = pSignedDistance->coordMin[i] + pSignedDistance->size[i] * pSignedDistance->delta[i];
 		}
 
+#endif
 		if(verbose)
 		{
 			printf("#\n");
 			printf("# Expanding box...\n");
 			printf("#\tcoordMin = { %+1.8f , %+1.8f , %+1.8f}; \n", pSignedDistance->coordMin[0], pSignedDistance->coordMin[1], pSignedDistance->coordMin[2]);
 			printf("#\tcoordMax = { %+1.8f , %+1.8f , %+1.8f}; \n", pSignedDistance->coordMax[0], pSignedDistance->coordMax[1], pSignedDistance->coordMax[2]);
-			printf("#\tsize     = {   %6lu ,   %6lu ,   %6lu}; \n", pSignedDistance->size[0]    , pSignedDistance->size[1]    , pSignedDistance->size[2]    );
+			printf("#\tsize     = {   %6u ,   %6u ,   %6u}; \n", pSignedDistance->size[0]    , pSignedDistance->size[1]    , pSignedDistance->size[2]    );
 		}
 
 		////////////////////////////////////////////////////////////////////////
@@ -230,7 +382,7 @@ int main(int argc, char *argv[])
 		if(verbose)
 		{
 			printf("#\n");
-			printf("# Creating the eulerian mesh [size = %lu]...", mesh_size);
+			printf("# Creating the eulerian mesh [size = %u]...", mesh_size);
 		}
 
 		fflush(stdout);
@@ -323,7 +475,7 @@ int main(int argc, char *argv[])
 		if(verbose)
 		{
 			printf("#\n");
-			printf("# Total points in the interface: [%lu ; %+1.8f sec];\n", qt_pts, theClock / DBL_CLOCKS_PER_SEC);
+			printf("# Total points in the interface: [%u ; %+1.8f sec];\n", qt_pts, theClock / DBL_CLOCKS_PER_SEC);
 		}
 
 		////////////////////////////////////////////////////////////////////////
