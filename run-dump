@@ -1,20 +1,31 @@
 #!/bin/bash
-INPUT_DIR=../data
-OUTPUT_DIR=out
 EXEC_PROG=debug/gts-cpt
+PARAM='--verbose --normalize --begin-x -1.5 --begin-y -1.5 --begin-z -1.5 --end-x 1.5 --end-y 1.5 --end-z 1.5 --size-x 200 --size-y 200 --size-z 200' 
+INPUT_FILE=$1
 
-mkdir $OUTPUT_DIR 2>/dev/null
 echo "Building '$EXEC_PROG'..."
-if `make 1> /dev/null`; then
-	if [ -f $m ] ; then
-		FILENAME=`basename $1`
-		OUTNAME=`basename $1 .gts`
-		echo "";
-		echo "-- $EXEC_PROG < $INPUT_DIR/$FILENAME > $OUTPUT_DIR/$OUTNAME";
-		echo "Begin [`date +%Y/%m/%d` `date +%H:%M:%S.%N`]";
-		$EXEC_PROG < $INPUT_DIR/$FILENAME 1> $OUTPUT_DIR/$FILENAME;
-		echo "End   [`date +%Y/%m/%d` `date +%H:%M:%S.%N`]";
+if `make 1> /dev/null`; then	
+	if [ -f $INPUT_FILE ]; then
+		FILENAME=`basename $INPUT_FILE`
+		EXTENSION=`echo "$FILENAME"|awk -F . '{print $NF}'`
+		if [ $EXTENSION == "stl" ]; then
+			TMP_FILE=/tmp/`basename $INPUT_FILE`.gts
+			echo "-> Converting STL file '$INPUT_FILE' to GTS file '$TMP_FILE'"
+			stl2gts	< $INPUT_FILE > $TMP_FILE
+			if [ $? -ne 0 ]; then
+				exit $?
+			fi
+			INPUT_FILE=$TMP_FILE
+		fi
 	fi
+
+	OUTPUT_FILE=`date +%Y%m%d-%H%M%S`.log
+
+	echo
+	echo "-- $EXEC_PROG $PARAM < $INPUT_FILE";
+	echo "Begin [`date +%Y/%m/%d` `date +%H:%M:%S.%N`]";
+	$EXEC_PROG $PARAM < $INPUT_FILE > $OUTPUT_FILE
+	echo "End   [`date +%Y/%m/%d` `date +%H:%M:%S.%N`]";
 else
 	echo "Did not make it... =("
 fi

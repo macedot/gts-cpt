@@ -1,5 +1,5 @@
 #!/bin/bash
-INPUT_DIR=../data
+INPUT_DIR=$1
 OUTPUT_DIR=out
 EXEC_PROG=debug/gts-cpt
 DEBUG_LOG=run-all-`date +%Y%m%d%H%M%S`.log
