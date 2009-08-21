@@ -14,6 +14,9 @@
 static const gdouble SQRT_3 = sqrt(3.0);
 #endif
 
+size_t  quantCell = 0;
+size_t  quantBox = 0;
+
 ////////////////////////////////////////////////////////////////////////////////
 ////////////////////////////////////////////////////////////////////////////////
 /******************************************************************************
@@ -282,9 +285,13 @@ int calc_idx_box(SizeVector idx_begin, SizeVector idx_end, GtsVector box_begin, 
 		// Expand by one the box;
 		if(idx_begin[i] > 1) idx_begin[i]--;
 		if(idx_end[i] < pSignedDistance->size[i]-1) idx_end[i]++;
+
+		quantCell += (idx_end[i] - idx_begin[i] + 1);
 	}
 	
 	// TODO: Media de celulas em cada caixa criada;
+
+	quantBox++;
 
 	return 0;
 }

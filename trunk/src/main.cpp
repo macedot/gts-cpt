@@ -14,6 +14,9 @@
 
 #define CHECK_DELTA
 
+extern size_t quantCell;
+extern size_t quantBox;
+
 // If defined, use an runtime generated sphere as input example wit the given geodesical order;
 // if > 8 -> visit cant plot pseudocolor (mem > 4GiB (?) !!)
 //#define INPUT_RUNTIME_SPHERE    8
@@ -414,26 +417,38 @@ int main(int argc, char *argv[])
 
 		for ( int t = 0 ; t < maxLoop; t++)
 		{
+		
+			quantCell = 0;
+			quantBox = 0;
+		
 			theClock = clock();
 			gts_surface_foreach_face(pSignedDistance->pSurface,(GtsFunc) cpt_foreach_face, pSignedDistance);
 			theClock = (clock() - theClock);
 			timeCpt[0] += theClock;
 
-			printf("# gts_surface_foreach_face: [%+1.8f sec];\n", timeCpt[0] / (DBL_CLOCKS_PER_SEC * maxLoop));
+			printf("# gts_surface_foreach_face: [%+1.8f sec] [avg cell/box = %+1.8f];\n", timeCpt[0] / (DBL_CLOCKS_PER_SEC * maxLoop) , quantCell/(gdouble)quantBox);
+
+
+			quantCell = 0;
+			quantBox = 0;
 
 			theClock = clock();
 			gts_surface_foreach_edge(pSignedDistance->pSurface,(GtsFunc) cpt_foreach_edge, pSignedDistance);
 			theClock = (clock() - theClock);
 			timeCpt[1] += theClock;
 
-			printf("# gts_surface_foreach_edge: [%+1.8f sec];\n", timeCpt[1] / (DBL_CLOCKS_PER_SEC * maxLoop));
+			printf("# gts_surface_foreach_edge: [%+1.8f sec] [avg cell/box = %+1.8f];\n", timeCpt[1] / (DBL_CLOCKS_PER_SEC * maxLoop) , quantCell/(gdouble)quantBox);
+
+
+			quantCell = 0;
+			quantBox = 0;
 
 			theClock = clock();
 			gts_surface_foreach_vertex(pSignedDistance->pSurface,(GtsFunc) cpt_foreach_vertex, pSignedDistance);
 			theClock = (clock() - theClock);
 			timeCpt[2] += theClock;
 
-			printf("# gts_surface_foreach_vertex: [%+1.8f sec];\n", timeCpt[2] / (DBL_CLOCKS_PER_SEC * maxLoop));
+			printf("# gts_surface_foreach_vertex: [%+1.8f sec] [avg cell/box = %+1.8f];\n", timeCpt[2] / (DBL_CLOCKS_PER_SEC * maxLoop) , quantCell/(gdouble)quantBox);
 		}
 
 		if(verbose)

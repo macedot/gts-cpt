@@ -1,5 +1,7 @@
 #!/bin/bash
-EXEC_PROG=debug/gts-cpt
+#EXEC_PROG="valgrind --leak-check=yes debug/gts-cpt"
+EXEC_PROG="debug/gts-cpt"
+PARAM='--verbose --normalize --begin-x -1.5 --begin-y -1.5 --begin-z -1.5 --end-x 1.5 --end-y 1.5 --end-z 1.5 --size-x 200 --size-y 200 --size-z 200' 
 INPUT_FILE=$1
 
 echo "Building '$EXEC_PROG'..."
@@ -8,7 +10,7 @@ if `make 1> /dev/null`; then
 		FILENAME=`basename $INPUT_FILE`
 		EXTENSION=`echo "$FILENAME"|awk -F . '{print $NF}'`
 		if [ $EXTENSION == "stl" ]; then
-			TMP_FILE=/tmp/`basename $INPUT_FILE .stl`-stl.gts
+			TMP_FILE=/tmp/`basename $INPUT_FILE`.gts
 			echo "-> Converting STL file '$INPUT_FILE' to GTS file '$TMP_FILE'"
 			stl2gts	< $INPUT_FILE > $TMP_FILE
 			if [ $? -ne 0 ]; then
@@ -16,20 +18,12 @@ if `make 1> /dev/null`; then
 			fi
 			INPUT_FILE=$TMP_FILE
 		fi
-
-		TMP_FILE=/tmp/`basename $INPUT_FILE .gts`-center.gts
-		echo "-> Normalizing : '$TMP_FILE'"
-		../gts/examples/transform -o < $INPUT_FILE > $TMP_FILE
-		if [ $? -ne 0 ]; then
-			exit $?
-		fi
-		INPUT_FILE=$TMP_FILE
 	fi
 
 	echo
-	echo "-- $EXEC_PROG < $INPUT_FILE";
+	echo "-- $EXEC_PROG $PARAM < $INPUT_FILE";
 	echo "Begin [`date +%Y/%m/%d` `date +%H:%M:%S.%N`]";
-	$EXEC_PROG < $INPUT_FILE
+	$EXEC_PROG $PARAM < $INPUT_FILE
 	echo "End   [`date +%Y/%m/%d` `date +%H:%M:%S.%N`]";
 else
 	echo "Did not make it... =("

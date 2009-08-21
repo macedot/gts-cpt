@@ -6,7 +6,7 @@ EXE  = debug/gts-cpt
 
 # Compiler, Linker Defines
 CPP      = /usr/bin/g++
-CPPFLAGS = -Wall -ansi -pedantic -g -O3 -funroll-loops
+CPPFLAGS = -Wall -ansi -pedantic -g -O3 -funroll-loops -ftree-vectorize -pg -lc
 
 LIBPATH  = -L../silo/lib
 LIBPATH += -L/usr/local/lib
@@ -17,7 +17,7 @@ INCLPATH+= -I/usr/lib64/glib-2.0/include
 INCLPATH+= -I/usr/lib/glib-2.0/include 
 INCLPATH+= -I/usr/local/include 
 INCLPATH+= -I../silo/include 
-INCLPATH+= -I../../visit/current/linux-x86_64/include/visit/
+INCLPATH+= -I../visit/current/linux-intel/include/visit/
 
 RM       = /bin/rm -f
 
@@ -34,5 +34,5 @@ $(OBJ):
 
 # Clean Up Objects, Exectuables, Dumps out of source directory
 clean:
-	$(RM) $(OBJ) $(EXE) src/*.o out/*
+	$(RM) $(OBJ) $(EXE) src/*.o
 
