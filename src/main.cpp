@@ -7,12 +7,23 @@
 #include "cpt.h"
 #include "export.h"
 #include <getopt.h>
+#include <sys/stat.h>  // For mkdir, stat
 
 #ifdef HAVE_UNISTD_H
 #  include <unistd.h>
 #endif /* HAVE_UNISTD_H */
 
 #define CHECK_DELTA
+
+namespace {
+    bool ensure_directory_exists(const char* path) {
+        struct stat st = {0};
+        if (stat(path, &st) == -1) {
+            return mkdir(path, 0700) == 0;
+        }
+        return S_ISDIR(st.st_mode);
+    }
+}
 
 extern size_t quantCell;
 extern size_t quantBox;
@@ -495,9 +506,20 @@ int main(int argc, char *argv[])
 
 		////////////////////////////////////////////////////////////////////////
 
+		// Ensure output directory exists
+		if (!ensure_directory_exists("out")) {
+			fprintf(stderr, "gtscpt: warning - cannot create 'out/' directory\n");
+		}
+
 		FILE* fpVtk = fopen("out/surface.vtk", "w+b");
-		gts_surface_write_vtk(pSignedDistance->pSurface, fpVtk);
-		fclose(fpVtk);
+		if (!fpVtk) {
+			fprintf(stderr, "gtscpt: cannot open 'out/surface.vtk' for writing\n");
+			fprintf(stderr, "Hint: ensure 'out/' directory exists with write permissions\n");
+			// Not a fatal error - continue with other cleanup
+		} else {
+			gts_surface_write_vtk(pSignedDistance->pSurface, fpVtk);
+			fclose(fpVtk);
+		}
 
 		////////////////////////////////////////////////////////////////////////
 
