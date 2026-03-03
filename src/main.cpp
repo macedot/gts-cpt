@@ -36,13 +36,17 @@ extern size_t quantBox;
 // to its perimeter relative to this same ratio for an equilateral
 // triangle with the same area. The quality is then one for equilateral
 // triangle and tends to zero for a very stretched triangle."
-static const gdouble  DBL_CLOCKS_PER_SEC  = (double)CLOCKS_PER_SEC;
-       const gdouble  MIN_TRANGLE_QUALITY = 0.5;   // TODO: Quanto eh bom?
-       const gdouble  MIN_DELTA_MESH      = 0.001;
-       const gdouble  size_sup            = 2.0;   // suporte da delta de dirac;
-static      gboolean  verbose             = TRUE;
-static      gboolean  normalize           = FALSE;
-static         guint  geodesation_order   = 0;
+
+namespace {
+    const double DBL_CLOCKS_PER_SEC = static_cast<double>(CLOCKS_PER_SEC);
+    constexpr double MIN_TRIANGLE_QUALITY = 0.5;  // Minimum triangle quality ratio (fix typo: MIN_TRANGLE)
+    constexpr double MIN_DELTA_MESH = 0.001;      // Minimum mesh spacing
+    constexpr double SIZE_SUP = 2.0;              // Dirac delta support
+    
+    gboolean verbose = FALSE;      // Default to quiet mode
+    gboolean normalize = FALSE;
+    guint geodesation_order = 0;
+}
 
 int main(int argc, char *argv[])
 {
@@ -278,16 +282,16 @@ int main(int argc, char *argv[])
 		// to its perimeter relative to this same ratio for an equilateral
 		// triangle with the same area. The quality is then one for equilateral
 		// triangle and tends to zero for a very stretched triangle."
-		if(qstats.face_quality.max < MIN_TRANGLE_QUALITY)
+		if(qstats.face_quality.max < MIN_TRIANGLE_QUALITY)
 		{
-			fprintf(stderr, ">>> FATAL: global trangle quality ratio below minimum triangle quality parameter;\n");
+			fprintf(stderr, ">>> FATAL: global triangle quality ratio below minimum triangle quality parameter;\n");
 			return 1;
 		}
-		else if(qstats.face_quality.mean < MIN_TRANGLE_QUALITY)
+		else if(qstats.face_quality.mean < MIN_TRIANGLE_QUALITY)
 		{
-			fprintf(stderr, ">>> WARNING: mean of trangle quality ratio below minimum triangle quality parameter;\n");
+			fprintf(stderr, ">>> WARNING: mean of triangle quality ratio below minimum triangle quality parameter;\n");
 		}
-		else if(qstats.face_quality.min < MIN_TRANGLE_QUALITY)
+		else if(qstats.face_quality.min < MIN_TRIANGLE_QUALITY)
 		{
 			fprintf(stderr, ">>> WARNING: some trangle have quality ratio below minimum triangle quality parameter;\n");
 		}
@@ -318,7 +322,7 @@ int main(int argc, char *argv[])
 		pSignedDistance->sigma = 3.0 * cpt_min(pSignedDistance->delta[0], cpt_min(pSignedDistance->delta[1], pSignedDistance->delta[2]));
 
 		gdouble  delta_max = cpt_max(pSignedDistance->delta[0], cpt_max(pSignedDistance->delta[1], pSignedDistance->delta[2]));
-		pSignedDistance->distCut = cpt_get_dist_cut(size_sup, delta_max);
+		pSignedDistance->distCut = cpt_get_dist_cut(SIZE_SUP, delta_max);
 		pSignedDistance->distMax = cpt_get_dist_max(pSignedDistance->distCut, delta_max);
 
 		if(verbose)
