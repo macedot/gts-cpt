@@ -385,7 +385,7 @@ int main(int argc, char *argv[])
 			printf("# Expanding box...\n");
 			printf("#\tcoordMin = { %+1.8f , %+1.8f , %+1.8f}; \n", pSignedDistance->coordMin[0], pSignedDistance->coordMin[1], pSignedDistance->coordMin[2]);
 			printf("#\tcoordMax = { %+1.8f , %+1.8f , %+1.8f}; \n", pSignedDistance->coordMax[0], pSignedDistance->coordMax[1], pSignedDistance->coordMax[2]);
-			printf("#\tsize     = {   %6u ,   %6u ,   %6u}; \n", pSignedDistance->size[0]    , pSignedDistance->size[1]    , pSignedDistance->size[2]    );
+			printf("#\tsize     = {   %6zu ,   %6zu ,   %6zu}; \n", pSignedDistance->size[0]    , pSignedDistance->size[1]    , pSignedDistance->size[2]    );
 		}
 
 		////////////////////////////////////////////////////////////////////////
@@ -528,7 +528,7 @@ int main(int argc, char *argv[])
 		if(verbose)
 		{
 			printf("#\n");
-			printf("# Total points in the interface: [%u ; %+1.8f sec];\n", qt_pts, theClock / DBL_CLOCKS_PER_SEC);
+			printf("# Total points in the interface: [%zu ; %+1.8f sec];\n", qt_pts, theClock / DBL_CLOCKS_PER_SEC);
 		}
 
 		////////////////////////////////////////////////////////////////////////

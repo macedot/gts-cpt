@@ -42,7 +42,7 @@ void Curvature_Test(GtsSurface *surface)
 	GSList		*item	= NULL;
 	GtsVertex	*v		= NULL;
 	GtsVector	Kh;
-	gboolean	success;
+	gboolean	success G_GNUC_UNUSED;  // GTS API requires this callback signature
 	double		khm;
 	//int			count	= 0;
 

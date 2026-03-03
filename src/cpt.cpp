@@ -367,7 +367,7 @@ void cpt_face(GtsTriangle *pTriangle, GtsVector normal, SignedDistance* pSignedD
 {
 	GtsVertex    *triangle_vertex[3];
 	GtsPoint     *triangle_point;
-	GtsVector    box_begin = { pSignedDistance->size[0] , pSignedDistance->size[1] , pSignedDistance->size[2] }; 
+	GtsVector    box_begin = { static_cast<gdouble>(pSignedDistance->size[0]) , static_cast<gdouble>(pSignedDistance->size[1]) , static_cast<gdouble>(pSignedDistance->size[2]) }; 
 	GtsVector    box_end   = { 0 , 0 , 0};
 	SizeVector   idx_begin, idx_end;
 	size_t      i;
@@ -433,7 +433,7 @@ void cpt_edge(GtsEdge *e, GtsVector normal[], SignedDistance* pSignedDistance, g
 {
 	GtsSegment   *edge_segment;
 	GtsPoint     *edge_point;
-	GtsVector    box_begin = { pSignedDistance->size[0] , pSignedDistance->size[1] , pSignedDistance->size[2] }; 
+	GtsVector    box_begin = { static_cast<gdouble>(pSignedDistance->size[0]) , static_cast<gdouble>(pSignedDistance->size[1]) , static_cast<gdouble>(pSignedDistance->size[2]) }; 
 	GtsVector    box_end   = { 0 , 0 , 0};
 	SizeVector   idx_begin, idx_end;
 
@@ -521,7 +521,7 @@ void cpt_vertex(GtsVertex *v, GtsVector normal, SignedDistance* pSignedDistance)
 {
 	ParamDistFunc sParam;
 	GtsPoint     *point = GTS_POINT(v);
-	GtsVector    box_begin = { pSignedDistance->size[0] , pSignedDistance->size[1] , pSignedDistance->size[2] }; 
+	GtsVector    box_begin = { static_cast<gdouble>(pSignedDistance->size[0]) , static_cast<gdouble>(pSignedDistance->size[1]) , static_cast<gdouble>(pSignedDistance->size[2]) }; 
 	GtsVector    box_end   = { 0 , 0 , 0};
 	SizeVector   idx_begin, idx_end;
 
@@ -543,6 +543,7 @@ void cpt_vertex(GtsVertex *v, GtsVector normal, SignedDistance* pSignedDistance)
 
 	sParam.pNormal = normal;
 	sParam.pObj    = point;
+	sParam.pSurfacePoint = nullptr;  // Not used in this context
 
 	cpt_distance_eulerian_mesh(pSignedDistance, idx_begin, idx_end,
 		(CptFuncDistance)cpt_signed_distance_vertex, &sParam, 1.0);

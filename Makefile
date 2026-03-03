@@ -6,7 +6,7 @@ EXE  = debug/gts-cpt
 
 # Compiler, Linker Defines
 CPP      = /usr/bin/g++
-CPPFLAGS = -Wall -std=c++17 -pedantic -g -O3 -funroll-loops -ftree-vectorize
+CPPFLAGS = -Wall -std=c++17 -pedantic -g -O3 -funroll-loops -ftree-vectorize -Werror
 
 LIBPATH  = -L/usr/local/lib
 
