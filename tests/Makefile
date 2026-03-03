@@ -3,11 +3,17 @@ CXX = g++
 CXXFLAGS = -std=c++20 -Wall -Wextra -g -I../include
 LDFLAGS = -lm
 
-TESTS = test_sign
+TESTS = test_sign test_safe_mesh_size test_cpt_math
 
 all: $(TESTS)
 
 test_sign: test_sign.cpp
+	$(CXX) $(CXXFLAGS) $< -o $@ $(LDFLAGS)
+
+test_safe_mesh_size: test_safe_mesh_size.cpp
+	$(CXX) $(CXXFLAGS) $< -o $@ $(LDFLAGS)
+
+test_cpt_math: test_cpt_math.cpp
 	$(CXX) $(CXXFLAGS) $< -o $@ $(LDFLAGS)
 
 clean:
