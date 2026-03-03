@@ -5,6 +5,7 @@
 #include <iostream>
 #include <cstdlib>
 #include <unistd.h>
+#include <cmath>
 // Blitz related
 //#include <blitz/numinquire.h>
 //#include <blitz/array.h>
@@ -29,8 +30,18 @@ extern "C" {
 }
 #endif
 
-//#define SIGN(x)                 ( (x) < 0.0 ? (-1.0) : (1.0) )
-#define SIGN(x)                 ( (x) / fabs(x) )
+// Safe sign function - replaces dangerous SIGN macro
+namespace gts_cpt {
+    [[nodiscard]] inline constexpr double sign(double x) noexcept {
+        // Use copysign: returns value with magnitude of 1.0 and sign of x
+        // For x = 0.0, copysign(1.0, +0.0) = 1.0
+        // For x = -0.0, copysign(1.0, -0.0) = -1.0
+        return std::copysign(1.0, x);
+    }
+}
+
+// Compatibility macro for gradual migration
+#define SIGN(x) gts_cpt::sign(x)
 
 
 typedef size_t  SizeVector[3];

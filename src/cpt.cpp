@@ -195,7 +195,7 @@ void cpt_distance_eulerian_mesh (SignedDistance* pSignedDistance,
 				{
 					if( absDist < fabs(pSignedDistance->value[ mesh_idx ]) )
 					{
-						signDist = (inside_outside > 0.0 ? distance / absDist : inside_outside);
+						signDist = (inside_outside > 0.0 ? gts_cpt::sign(distance) : inside_outside);
 						if(absDist > pSignedDistance->sigma) 
 							absDist = pSignedDistance->sigma;
 							
@@ -224,7 +224,7 @@ gdouble cpt_distance_sign(GtsPoint* pPointMesh, ParamDistFunc* pParam)
 		     + (*pNormal)[1] * (pPointMesh->y - pSurfacePoint->y)
 		     + (*pNormal)[2] * (pPointMesh->z - pSurfacePoint->z);
 		     
-	return distance / fabs(distance);
+	return gts_cpt::sign(distance);  // Safe sign extraction
 }
 
 /******************************************************************************
