@@ -1,23 +1,20 @@
 # Source, Executable, Includes, Library Defines
 SRC  = src/main.cpp src/gtstools.cpp src/cpt.cpp src/export.cpp
 OBJ  = $(SRC:.cpp=.o)
-LIBS = -lgts -lglib-2.0 -lsilo -lm -ldl
+LIBS = -lgts -lglib-2.0 -lsiloh5 -lm -ldl
 EXE  = debug/gts-cpt
 
 # Compiler, Linker Defines
 CPP      = /usr/bin/g++
-CPPFLAGS = -Wall -ansi -pedantic -g -O3 -funroll-loops -ftree-vectorize -pg -lc
+CPPFLAGS = -Wall -std=c++17 -pedantic -g -O3 -funroll-loops -ftree-vectorize
 
-LIBPATH  = -L../silo/lib
-LIBPATH += -L/usr/local/lib
+LIBPATH  = -L/usr/local/lib
 
 INCLPATH = -I./include/ 
 INCLPATH+= -I/usr/include/glib-2.0 
 INCLPATH+= -I/usr/lib64/glib-2.0/include 
 INCLPATH+= -I/usr/lib/glib-2.0/include 
-INCLPATH+= -I/usr/local/include 
-INCLPATH+= -I../silo/include 
-INCLPATH+= -I../visit/current/linux-intel/include/visit/
+INCLPATH+= -I/usr/local/include
 
 RM       = /bin/rm -f
 

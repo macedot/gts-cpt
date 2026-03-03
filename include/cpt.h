@@ -23,8 +23,8 @@ typedef struct param_distance_function {
 gdouble cpt_min(const gdouble a, const gdouble b) noexcept;
 gdouble cpt_max(const gdouble a, const gdouble b) noexcept;
 
-gdouble cpt_get_dist_cut(const gdouble size_sup, const gdouble delta_max);
-gdouble cpt_get_dist_max(const gdouble dist_cut, const gdouble dist_extra);
+gdouble cpt_get_dist_cut(const gdouble size_sup, const gdouble delta_max) noexcept;
+gdouble cpt_get_dist_max(const gdouble dist_cut, const gdouble dist_extra) noexcept;
 
 gdouble cpt_vector_angle(const GtsVector v1, const GtsVector v2) noexcept;
 
