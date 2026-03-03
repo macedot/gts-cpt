@@ -22,14 +22,14 @@ size_t  quantBox = 0;
 /******************************************************************************
  *
  ******************************************************************************/
-gdouble cpt_min(gdouble a, gdouble b)
+gdouble cpt_min(const gdouble a, const gdouble b) noexcept
 {
 	return (a < b ? a : b);
 }
 /******************************************************************************
  *
  ******************************************************************************/
-gdouble cpt_max(gdouble a, gdouble b)
+gdouble cpt_max(const gdouble a, const gdouble b) noexcept
 {
 	return (a > b ? a : b);
 }
@@ -38,14 +38,14 @@ gdouble cpt_max(gdouble a, gdouble b)
  * h = delta maximo
  * suporte da delta de dirac = 2
  ******************************************************************************/
-gdouble cpt_get_dist_cut(gdouble size_sup, gdouble delta_max)
+gdouble cpt_get_dist_cut(const gdouble size_sup, const gdouble delta_max) noexcept
 {
 	return SQRT_3 * 0.5 * size_sup * delta_max;
 }
 /******************************************************************************
  *
  ******************************************************************************/
-gdouble cpt_get_dist_max(gdouble dist_cut, gdouble dist_extra)
+gdouble cpt_get_dist_max(const gdouble dist_cut, const gdouble dist_extra) noexcept
 {
 	static const gdouble c = 1.0;
 	return dist_cut + c * dist_extra;
@@ -60,17 +60,16 @@ gdouble cpt_get_dist_max(gdouble dist_cut, gdouble dist_extra)
  *       gts_triangle_angle at GTS library, except this version do not check 
  *       if theta <  0.0;
  */
-gdouble cpt_vector_angle (GtsVector v1, GtsVector v2)
+gdouble cpt_vector_angle(const GtsVector v1, const GtsVector v2) noexcept
 {
-	gdouble pvx, pvy, pvz;
-	gdouble theta;
+	const gdouble pvx = v1[1]*v2[2] - v1[2]*v2[1];
+	const gdouble pvy = v1[2]*v2[0] - v1[0]*v2[2];
+	const gdouble pvz = v1[0]*v2[1] - v1[1]*v2[0];
 
-	pvx = v1[1]*v2[2] - v1[2]*v2[1];
-	pvy = v1[2]*v2[0] - v1[0]*v2[2];
-	pvz = v1[0]*v2[1] - v1[1]*v2[0];
-
-	theta = atan2 (sqrt (pvx*pvx + pvy*pvy + pvz*pvz) ,
-	               v1[0]*v2[0] + v1[1]*v2[1] + v1[2]*v2[2]);
+	const gdouble theta = atan2(
+		sqrt(pvx*pvx + pvy*pvy + pvz*pvz),
+		v1[0]*v2[0] + v1[1]*v2[1] + v1[2]*v2[2]
+	);
 
 	return theta;
 }

@@ -20,15 +20,15 @@ typedef struct param_distance_function {
 	(box_end)[1]   = cpt_max((box_end)[1]  , cpt_max((point)->y, (point)->y + (sign) * (normal)[1])); \
 	(box_end)[2]   = cpt_max((box_end)[2]  , cpt_max((point)->z, (point)->z + (sign) * (normal)[2]));
 
-gdouble cpt_min(gdouble a, gdouble b);
-gdouble cpt_max(gdouble a, gdouble b);
+gdouble cpt_min(const gdouble a, const gdouble b) noexcept;
+gdouble cpt_max(const gdouble a, const gdouble b) noexcept;
 
-gdouble cpt_get_dist_cut(gdouble size_sup, gdouble delta_max);
-gdouble cpt_get_dist_max(gdouble dist_cut, gdouble dist_extra);
+gdouble cpt_get_dist_cut(const gdouble size_sup, const gdouble delta_max);
+gdouble cpt_get_dist_max(const gdouble dist_cut, const gdouble dist_extra);
 
-gdouble cpt_vector_angle (GtsVector vector[]);
+gdouble cpt_vector_angle(const GtsVector v1, const GtsVector v2) noexcept;
 
-gdouble cpt_round_value(gdouble valueParam, gdouble valueMin);
+gdouble cpt_round_value(const gdouble valueParam, const gdouble valueMin);
 
 int cpt_init_distance_function(SignedDistance* pSignedDistance);
 
