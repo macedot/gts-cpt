@@ -10,6 +10,7 @@
 #include <sys/stat.h>  // For mkdir, stat
 #include <array>
 #include <cstdlib>
+#include <memory>
 
 #ifdef HAVE_UNISTD_H
 #  include <unistd.h>
@@ -52,7 +53,7 @@ namespace {
 
 int main(int argc, char *argv[])
 {
-	SignedDistance  *pSignedDistance = NULL;
+	std::unique_ptr<SignedDistance> pSignedDistance;
 	time_t      theClock;
 	time_t      timeCpt[3];
 	GtsFile*    fp;
@@ -186,15 +187,8 @@ int main(int argc, char *argv[])
 		
 		////////////////////////////////////////////////////////////////////////
 
-		// @TODO
-		pSignedDistance = new SignedDistance;
-		memset(pSignedDistance, 0, sizeof(SignedDistance));
-
-		for(i = 0; i < 3; i++)
-		{
-			pSignedDistance->coordMin[i] =  DBL_MAX;
-			pSignedDistance->coordMax[i] = -DBL_MAX;
-		}
+		pSignedDistance = std::make_unique<SignedDistance>();
+		// coordMin and coordMax are initialized in class definition
 
 		////////////////////////////////////////////////////////////////////////
 
@@ -350,7 +344,7 @@ int main(int argc, char *argv[])
 
 		// find the box than contains the surface;
 		theClock = clock();
-		gts_surface_foreach_vertex(pSignedDistance->pSurface, (GtsFunc)surface_findbox, pSignedDistance);
+		gts_surface_foreach_vertex(pSignedDistance->pSurface, (GtsFunc)surface_findbox, pSignedDistance.get());
 		theClock = (clock() - theClock);
 
 		if(verbose)
@@ -404,21 +398,41 @@ int main(int argc, char *argv[])
 			return -1;
 		}
 
-		size_t  mesh_size = (pSignedDistance->size[0] * pSignedDistance->size[1] * pSignedDistance->size[2]);
+		size_t mesh_size;
+		try {
+			mesh_size = gts_cpt::safe_mesh_size(
+				pSignedDistance->size[0],
+				pSignedDistance->size[1],
+				pSignedDistance->size[2]
+			);
+		} catch (const std::overflow_error& e) {
+			fprintf(stderr, "gtscpt: %s\n", e.what());
+			return 1;
+		}
+
+		if (mesh_size == 0) {
+			g_warning("INVALID MESH SIZE!!");
+			return 1;
+		}
 
 		if(verbose)
 		{
 			printf("#\n");
-			printf("# Creating the eulerian mesh [size = %u]...", mesh_size);
+			printf("# Creating the eulerian mesh [size = %zu]...", mesh_size);
 		}
 
 		fflush(stdout);
 		fflush(stderr);
 
-		pSignedDistance->value = new gdouble[mesh_size];
+		try {
+			pSignedDistance->value.resize(mesh_size);
+		} catch (const std::bad_alloc& e) {
+			fprintf(stderr, "gtscpt: failed to allocate mesh: %s\n", e.what());
+			return 1;
+		}
 
 		theClock = clock();
-		cpt_init_distance_function(pSignedDistance);
+		cpt_init_distance_function(pSignedDistance.get());
 		theClock = (clock() - theClock);
 
 		if(verbose)
@@ -446,7 +460,7 @@ int main(int argc, char *argv[])
 			quantBox = 0;
 		
 			theClock = clock();
-			gts_surface_foreach_face(pSignedDistance->pSurface,(GtsFunc) cpt_foreach_face, pSignedDistance);
+			gts_surface_foreach_face(pSignedDistance->pSurface,(GtsFunc) cpt_foreach_face, pSignedDistance.get());
 			theClock = (clock() - theClock);
 			timeCpt[0] += theClock;
 
@@ -457,7 +471,7 @@ int main(int argc, char *argv[])
 			quantBox = 0;
 
 			theClock = clock();
-			gts_surface_foreach_edge(pSignedDistance->pSurface,(GtsFunc) cpt_foreach_edge, pSignedDistance);
+			gts_surface_foreach_edge(pSignedDistance->pSurface,(GtsFunc) cpt_foreach_edge, pSignedDistance.get());
 			theClock = (clock() - theClock);
 			timeCpt[1] += theClock;
 
@@ -468,7 +482,7 @@ int main(int argc, char *argv[])
 			quantBox = 0;
 
 			theClock = clock();
-			gts_surface_foreach_vertex(pSignedDistance->pSurface,(GtsFunc) cpt_foreach_vertex, pSignedDistance);
+			gts_surface_foreach_vertex(pSignedDistance->pSurface,(GtsFunc) cpt_foreach_vertex, pSignedDistance.get());
 			theClock = (clock() - theClock);
 			timeCpt[2] += theClock;
 
@@ -509,7 +523,7 @@ int main(int argc, char *argv[])
 		////////////////////////////////////////////////////////////////////////
 
 		theClock = clock();
-		qt_pts = cpt_eulerian_mesh_write_silo(pSignedDistance, "out/eulerianmesh.silo");
+			qt_pts = cpt_eulerian_mesh_write_silo(pSignedDistance.get(), "out/eulerianmesh.silo");
 		theClock = (clock() - theClock);
 		if(verbose)
 		{
@@ -536,21 +550,20 @@ int main(int argc, char *argv[])
 
 		////////////////////////////////////////////////////////////////////////
 
-		gts_object_destroy(GTS_OBJECT(pSignedDistance->pSurface));
 		gts_finalize();
-
-		delete [] pSignedDistance->value;  pSignedDistance->value = NULL;
-		delete pSignedDistance;           pSignedDistance       = NULL;
+		// unique_ptr and vector handle cleanup automatically
 
 		fflush(stdout);
 		fflush(stderr);
 
 	}
+	catch(const std::exception& e) {
+		fprintf(stderr, "Exception: %s\n", e.what());
+		return 1;
+	}
 	catch(...) {
-
-		g_warning("unhandle exception");
-		return -1;
-
+		g_warning("Unknown exception");
+		return 1;
 	}
 
 	return 0;
