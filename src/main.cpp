@@ -8,6 +8,8 @@
 #include "export.h"
 #include <getopt.h>
 #include <sys/stat.h>  // For mkdir, stat
+#include <array>
+#include <cstdlib>
 
 #ifdef HAVE_UNISTD_H
 #  include <unistd.h>
@@ -56,7 +58,7 @@ int main(int argc, char *argv[])
 	GtsFile*    fp;
 	GtsVector   beginMesh = { 0.0 , 0.0 , 0.0 };     // begin of eulerian mesh (x,y,z)
 	GtsVector   endMesh   = { 0.0 , 0.0 , 0.0 };     // end of eulerian mesh (x,y,z)
-	SizeVector  sizeMesh  = {   0 ,   0 ,   0 };     // site in delta unit;
+	std::array<long, 3> sizeMesh = {0, 0, 0};        // mesh size (signed for validation);
 	size_t      i;
 	int         c = 0;
 
@@ -89,31 +91,43 @@ int main(int argc, char *argv[])
 		while (c != EOF) {
 			switch ((c = getopt_long (argc, argv, "A:B:C:D:E:F:G:H:I:os:vh", long_options, &option_index))) {
 				case 'A': /* x */
-					beginMesh[0] = (gdouble) atof (optarg);
+					beginMesh[0] = static_cast<gdouble>(std::atof(optarg));
 					break;
 				case 'B': /* sy */
-					beginMesh[1] = (gdouble) atof (optarg);
+					beginMesh[1] = static_cast<gdouble>(std::atof(optarg));
 					break;
 				case 'C': /* sz */
-					beginMesh[2] = (gdouble) atof (optarg);
+					beginMesh[2] = static_cast<gdouble>(std::atof(optarg));
 					break;
 				case 'D': /* x */
-					endMesh[0] = (gdouble) atof (optarg);
+					endMesh[0] = static_cast<gdouble>(std::atof(optarg));
 					break;
 				case 'E': /* sy */
-					endMesh[1] = (gdouble) atof (optarg);
+					endMesh[1] = static_cast<gdouble>(std::atof(optarg));
 					break;
 				case 'F': /* sz */
-					endMesh[2] = (gdouble) atof (optarg);
+					endMesh[2] = static_cast<gdouble>(std::atof(optarg));
 					break;
 				case 'G': /* sx */
-					sizeMesh[0] = (size_t) atoi (optarg);
+					sizeMesh[0] = std::atoi(optarg);
+					if (sizeMesh[0] <= 0) {
+						fprintf(stderr, "gtscpt: size-x must be positive, got %ld\n", sizeMesh[0]);
+						return 1;
+					}
 					break;
 				case 'H': /* sy */
-					sizeMesh[1] = (size_t) atoi (optarg);
+					sizeMesh[1] = std::atoi(optarg);
+					if (sizeMesh[1] <= 0) {
+						fprintf(stderr, "gtscpt: size-y must be positive, got %ld\n", sizeMesh[1]);
+						return 1;
+					}
 					break;
 				case 'I': /* sz */
-					sizeMesh[2] = (size_t) atoi (optarg);
+					sizeMesh[2] = std::atoi(optarg);
+					if (sizeMesh[2] <= 0) {
+						fprintf(stderr, "gtscpt: size-z must be positive, got %ld\n", sizeMesh[2]);
+						return 1;
+					}
 					break;
 				case 'o': /* normalize */
 					normalize = TRUE;
@@ -168,13 +182,8 @@ int main(int argc, char *argv[])
 			return 1; // failure
 		}
 
-		// valid number of cells in each eulerian mesh axis is a must!		
-		if ( sizeMesh[0] <= 0 || sizeMesh[1] <= 0 || sizeMesh[2] <= 0)
-		{
-			fputs("gtscpt: you must correctly especify the size of eulerian mesh!\n", stderr);
-			return 1; // failure
-		}
-
+		// Note: size validation is now done during command-line parsing
+		
 		////////////////////////////////////////////////////////////////////////
 
 		// @TODO
@@ -307,8 +316,8 @@ int main(int argc, char *argv[])
 		{
 			pSignedDistance->coordMin[i] = beginMesh[i];
 			pSignedDistance->coordMax[i] = endMesh[i];
-			pSignedDistance->size[i]     = sizeMesh[i];
-			pSignedDistance->delta[i]    = fabs( (pSignedDistance->coordMax[i] - pSignedDistance->coordMin[i]) / (gdouble)pSignedDistance->size[i] );
+			pSignedDistance->size[i]     = static_cast<size_t>(sizeMesh[i]);
+			pSignedDistance->delta[i]    = fabs( (pSignedDistance->coordMax[i] - pSignedDistance->coordMin[i]) / static_cast<gdouble>(pSignedDistance->size[i]) );
 		}
 
 #if 0
