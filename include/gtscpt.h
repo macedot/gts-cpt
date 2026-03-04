@@ -34,6 +34,9 @@ extern "C" {
 }
 #endif
 
+// C++ RAII wrappers (must be outside extern "C" block)
+#include "gts-cpp/surface.hpp"
+
 // Safe sign function - replaces dangerous SIGN macro
 namespace gts_cpt {
     [[nodiscard]] inline constexpr double sign(double x) noexcept {
@@ -75,27 +78,38 @@ public:
     gdouble      distCut = 0.0;          // (epson_1) half size of band
     gdouble      distMax = 0.0;          // (epson_2) maximum distance
     gdouble      sigma   = 0.0;          // = 3 * MIN (HX , HY , HZ)
-    GtsSurface*  pSurface = nullptr;     // Lagrangian Mesh (owned)
+    
+    // RAII surface wrapper - owns the GTS surface
+    std::unique_ptr<gts::Surface> surface;
+    
+    /**
+     * @brief Get raw GtsSurface pointer for backward compatibility
+     * @return Raw pointer to GTS surface (or nullptr if not set)
+     * 
+     * Note: This returns the underlying pointer. Do not delete it!
+     * The surface wrapper owns the object.
+     */
+    GtsSurface* get_surface() const noexcept {
+        return surface ? surface->get() : nullptr;
+    }
+    
+    // Backward compatible accessor - prefer get_surface() for new code
+    GtsSurface* pSurface() const noexcept { return get_surface(); }
     
     GtsVector    coordMin = { std::numeric_limits<gdouble>::max(),
                                std::numeric_limits<gdouble>::max(),
                                std::numeric_limits<gdouble>::max() };
     GtsVector    coordMax = { std::numeric_limits<gdouble>::lowest(),
-                               std::numeric_limits<gdouble>::lowest(),
-                               std::numeric_limits<gdouble>::lowest() };
+                              std::numeric_limits<gdouble>::lowest(),
+                              std::numeric_limits<gdouble>::lowest() };
     GtsVector    delta = { 0.0, 0.0, 0.0 };
     SizeVector   size = { 0, 0, 0 };
     
     // Constructor
     SignedDistance() = default;
     
-    // Destructor - automatically cleans up GTS surface
-    ~SignedDistance() {
-        if (pSurface) {
-            gts_object_destroy(GTS_OBJECT(pSurface));
-            pSurface = nullptr;
-        }
-    }
+    // Destructor - automatically cleans up via unique_ptr
+    ~SignedDistance() = default;
     
     // Delete copy operations (expensive, error-prone)
     SignedDistance(const SignedDistance&) = delete;
@@ -107,7 +121,7 @@ public:
         , distCut(other.distCut)
         , distMax(other.distMax)
         , sigma(other.sigma)
-        , pSurface(other.pSurface)
+        , surface(std::move(other.surface))
     {
         for (int i = 0; i < 3; i++) {
             coordMin[i] = other.coordMin[i];
@@ -115,7 +129,6 @@ public:
             delta[i] = other.delta[i];
             size[i] = other.size[i];
         }
-        other.pSurface = nullptr;
     }
     
     SignedDistance& operator=(SignedDistance&& other) noexcept {
@@ -124,9 +137,7 @@ public:
             distCut = other.distCut;
             distMax = other.distMax;
             sigma = other.sigma;
-            if (pSurface) gts_object_destroy(GTS_OBJECT(pSurface));
-            pSurface = other.pSurface;
-            other.pSurface = nullptr;
+            surface = std::move(other.surface);
             for (int i = 0; i < 3; i++) {
                 coordMin[i] = other.coordMin[i];
                 coordMax[i] = other.coordMax[i];

@@ -192,7 +192,7 @@ int main(int argc, char *argv[])
 
 		////////////////////////////////////////////////////////////////////////
 
-		pSignedDistance->pSurface = gts_surface_new(gts_surface_class(), gts_face_class(), gts_edge_class(), gts_vertex_class());
+		pSignedDistance->surface = gts::Surface::create();
 
 		if(geodesation_order > 0)
 		{
@@ -206,7 +206,7 @@ int main(int argc, char *argv[])
 			}
 
 			theClock = clock();
-			gts_surface_generate_sphere(pSignedDistance->pSurface, geodesation_order);
+			gts_surface_generate_sphere(pSignedDistance->get_surface(), geodesation_order);
 			theClock = (clock() - theClock);
 
 			if(verbose)
@@ -221,7 +221,7 @@ int main(int argc, char *argv[])
 		else
 		{
 			fp = gts_file_new(stdin);
-			if(gts_surface_read(pSignedDistance->pSurface, fp))
+			if(gts_surface_read(pSignedDistance->get_surface(), fp))
 			{
 				fputs("gtscpt: the file on standard input is not a valid GTS file\n", stderr);
 				fprintf(stderr, "stdin:%d:%d: %p\n", fp->line, fp->pos, fp->error);
@@ -234,13 +234,13 @@ int main(int argc, char *argv[])
 
 		if(verbose)
 		{
-			gts_surface_print_stats(pSignedDistance->pSurface, stdout);
-			printf("#   Total area: %g\n", gts_surface_area(pSignedDistance->pSurface));
+			gts_surface_print_stats(pSignedDistance->get_surface(), stdout);
+			printf("#   Total area: %g\n", gts_surface_area(pSignedDistance->get_surface()));
 		}
 
 		if (normalize) 
 		{
-			GtsBBox * bb = gts_bbox_surface (gts_bbox_class (), pSignedDistance->pSurface);
+			GtsBBox * bb = gts_bbox_surface (gts_bbox_class (), pSignedDistance->get_surface());
 			gdouble scale = bb->x2 - bb->x1;
 			GtsMatrix * sc;
 
@@ -252,34 +252,34 @@ int main(int argc, char *argv[])
 			sc[0][3] = - (bb->x1 + bb->x2)/2.;
 			sc[1][3] = - (bb->y1 + bb->y2)/2.;
 			sc[2][3] = - (bb->z1 + bb->z2)/2.;
-			gts_surface_foreach_vertex (pSignedDistance->pSurface, (GtsFunc) gts_point_transform, sc);
+			gts_surface_foreach_vertex (pSignedDistance->get_surface(), (GtsFunc) gts_point_transform, sc);
 			sc[0][0] = sc[1][1] = sc[2][2] = scale;    
 			sc[0][3] = sc[1][3] = sc[2][3] = 0.;
-			gts_surface_foreach_vertex (pSignedDistance->pSurface, (GtsFunc) gts_point_transform, sc);
+			gts_surface_foreach_vertex (pSignedDistance->get_surface(), (GtsFunc) gts_point_transform, sc);
 			gts_matrix_destroy (sc);
 
 
-			gts_surface_print_stats(pSignedDistance->pSurface, stdout);
-			printf("#   Total area (normalized): %g\n", gts_surface_area(pSignedDistance->pSurface));
+			gts_surface_print_stats(pSignedDistance->get_surface(), stdout);
+			printf("#   Total area (normalized): %g\n", gts_surface_area(pSignedDistance->get_surface()));
 		}
 
 		////////////////////////////////////////////////////////////////////////
 
 		// test if surface is a closed and orientable manifold.
-		// we don't need to test if pSignedDistance->pSurface is a manifold since both tests below implies that.
-		if(!gts_surface_is_closed(pSignedDistance->pSurface))
+		// we don't need to test if pSignedDistance->get_surface() is a manifold since both tests below implies that.
+		if(!gts_surface_is_closed(pSignedDistance->get_surface()))
 		{
 			fprintf(stderr, ">>> WARNING: surface is not closed -> not a manifold;\n");
 			return 1;
 		}
-		if(!gts_surface_is_orientable(pSignedDistance->pSurface))
+		if(!gts_surface_is_orientable(pSignedDistance->get_surface()))
 		{
 			fprintf(stderr, ">>> WARNING: surface is not orientable -> not a manifold;\n");
 			return 1;
 		}
 
 		GtsSurfaceQualityStats   qstats;
-		gts_surface_quality_stats(pSignedDistance->pSurface, &qstats);
+		gts_surface_quality_stats(pSignedDistance->get_surface(), &qstats);
 
 		// "The quality of a triangle is defined as the ratio of its surface
 		// to its perimeter relative to this same ratio for an equilateral
@@ -302,7 +302,7 @@ int main(int argc, char *argv[])
 		// @TODO: Definir funcoes usadas como parametro;
 		// @TODO: Melhorar o objeto discretizado tal que:
 		//	aresta media menor que deltas da malha euleriana (faixa para tamanhos de arestas);
-		// gts_surface_refine(pSignedDistance->pSurface, NULL, NULL, NULL, NULL, refine_stop, refine_stop_param);
+		// gts_surface_refine(pSignedDistance->get_surface(), NULL, NULL, NULL, NULL, refine_stop, refine_stop_param);
 
 		////////////////////////////////////////////////////////////////////////
 
@@ -344,7 +344,7 @@ int main(int argc, char *argv[])
 
 		// find the box than contains the surface;
 		theClock = clock();
-		gts_surface_foreach_vertex(pSignedDistance->pSurface, (GtsFunc)surface_findbox, pSignedDistance.get());
+		gts_surface_foreach_vertex(pSignedDistance->get_surface(), (GtsFunc)surface_findbox, pSignedDistance.get());
 		theClock = (clock() - theClock);
 
 		if(verbose)
@@ -460,7 +460,7 @@ int main(int argc, char *argv[])
 			quantBox = 0;
 		
 			theClock = clock();
-			gts_surface_foreach_face(pSignedDistance->pSurface,(GtsFunc) cpt_foreach_face, pSignedDistance.get());
+			gts_surface_foreach_face(pSignedDistance->get_surface(),(GtsFunc) cpt_foreach_face, pSignedDistance.get());
 			theClock = (clock() - theClock);
 			timeCpt[0] += theClock;
 
@@ -471,7 +471,7 @@ int main(int argc, char *argv[])
 			quantBox = 0;
 
 			theClock = clock();
-			gts_surface_foreach_edge(pSignedDistance->pSurface,(GtsFunc) cpt_foreach_edge, pSignedDistance.get());
+			gts_surface_foreach_edge(pSignedDistance->get_surface(),(GtsFunc) cpt_foreach_edge, pSignedDistance.get());
 			theClock = (clock() - theClock);
 			timeCpt[1] += theClock;
 
@@ -482,7 +482,7 @@ int main(int argc, char *argv[])
 			quantBox = 0;
 
 			theClock = clock();
-			gts_surface_foreach_vertex(pSignedDistance->pSurface,(GtsFunc) cpt_foreach_vertex, pSignedDistance.get());
+			gts_surface_foreach_vertex(pSignedDistance->get_surface(),(GtsFunc) cpt_foreach_vertex, pSignedDistance.get());
 			theClock = (clock() - theClock);
 			timeCpt[2] += theClock;
 
@@ -544,7 +544,7 @@ int main(int argc, char *argv[])
 			fprintf(stderr, "Hint: ensure 'out/' directory exists with write permissions\n");
 			// Not a fatal error - continue with other cleanup
 		} else {
-			gts_surface_write_vtk(pSignedDistance->pSurface, fpVtk);
+			gts_surface_write_vtk(pSignedDistance->get_surface(), fpVtk);
 			fclose(fpVtk);
 		}
 

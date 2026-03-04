@@ -32,13 +32,10 @@ gdouble cpt_round_value(const gdouble valueParam, const gdouble valueMin);
 
 int cpt_init_distance_function(SignedDistance* pSignedDistance);
 
-void cpt_vector_normalize(GtsVector *pVector, gdouble factor);
-
 void cpt_foreach_face(GtsTriangle *pTriangle, gpointer pEulerian);
 void cpt_foreach_edge(GtsEdge *pEdge, gpointer pEulerian);
 void cpt_foreach_vertex(GtsVertex *pVertex, gpointer pEulerian);
 
-void surface_findbox_by_list(GtsSurface *surface, gpointer pEulerian);
 void surface_findbox(GtsVertex *pVertex, gpointer pEulerian);
 
 size_t cpt_eulerian_mesh_write(SignedDistance *pSignedDistance, FILE *fp);

@@ -13,7 +13,8 @@ size_t cpt_eulerian_mesh_write_silo(SignedDistance *pSignedDistance,  const char
 	DBfile  *dbfile= NULL;            // The Silo file pointer
 	float   *nodex, *nodey, *nodez;   // The coordinate arrays
 	float   *var;                     // Field var
-	int     dims[3], size;            // The number of nodes in each dimension
+	int     dims[3];                 // The number of nodes in each dimension
+	size_t  size;                    // Total mesh size (size_t to prevent overflow)
 	int     i, j, k;
 	int     idxZ, idxY, mesh_idx;
 	size_t  valid = 0;

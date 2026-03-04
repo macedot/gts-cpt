@@ -1,5 +1,6 @@
 # Source, Executable, Includes, Library Defines
 SRC  = src/main.cpp src/gtstools.cpp src/cpt.cpp src/export.cpp
+SRC += src/gts-cpp/surface.cpp
 OBJ  = $(SRC:.cpp=.o)
 LIBS = -lgts -lglib-2.0 -lsiloh5 -lm -ldl
 EXE  = debug/gts-cpt
@@ -11,6 +12,7 @@ CPPFLAGS = -Wall -std=c++17 -pedantic -g -O3 -funroll-loops -ftree-vectorize -We
 LIBPATH  = -L/usr/local/lib
 
 INCLPATH = -I./include/ 
+INCLPATH+= -I./include/gts-cpp
 INCLPATH+= -I/usr/include/glib-2.0 
 INCLPATH+= -I/usr/lib64/glib-2.0/include 
 INCLPATH+= -I/usr/lib/glib-2.0/include 

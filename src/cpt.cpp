@@ -82,11 +82,17 @@ gdouble cpt_point_angle(GtsPoint *p1, GtsPoint *p2, GtsPoint *p3)
 	gdouble  angle;
 
 	dist = gts_point_distance(p2, p1);
+	if (dist < std::numeric_limits<gdouble>::epsilon()) {
+		return 0.0;  // Degenerate case: coincident points
+	}
 	n1x = (p2->x - p1->x) / dist;
 	n1y = (p2->y - p1->y) / dist;
 	n1z = (p2->z - p1->z) / dist;
 
 	dist = gts_point_distance(p3, p1);
+	if (dist < std::numeric_limits<gdouble>::epsilon()) {
+		return 0.0;  // Degenerate case: coincident points
+	}
 	n2x = (p3->x - p1->x) / dist;
 	n2y = (p3->y - p1->y) / dist;
 	n2z = (p3->z - p1->z) / dist;
@@ -302,7 +308,7 @@ int cpt_init_distance_function(SignedDistance* pSignedDistance)
 	size_t  i, j, k;
 	size_t  posZ, posY, mesh_pos;
 	
-	GNode *tree = gts_bb_tree_surface(pSignedDistance->pSurface);
+	GNode *tree = gts_bb_tree_surface(pSignedDistance->get_surface());
 	gboolean inside, open = FALSE;
 		
 	// loop through the points inside the box;
