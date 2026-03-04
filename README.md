@@ -154,12 +154,19 @@ gts-cpt/
 │   ├── cpt.h         # CPT function declarations
 │   ├── export.h      # Export function declarations
 │   ├── gtstools.h    # GTS utility declarations
-│   └── array3d.h     # Legacy array template (unused)
+│   ├── array3d.h     # Legacy array template (unused)
+│   └── gts-cpp/      # C++ RAII wrappers
+│       ├── gts_wrapper.hpp   # Template deleters for GTS objects
+│       ├── surface.hpp       # gts::Surface RAII wrapper
+│       ├── vertex.hpp        # gts::Vertex, gts::Edge wrappers
+│       └── callbacks.hpp     # Callback utilities
 ├── src/
 │   ├── main.cpp      # Entry point, CLI parsing
 │   ├── cpt.cpp       # CPT algorithm implementation
 │   ├── export.cpp    # Silo/VTK export functions
-│   └── gtstools.cpp  # GTS utility functions
+│   ├── gtstools.cpp  # GTS utility functions
+│   └── gts-cpp/      # C++ wrapper implementations
+│       └── surface.cpp
 ├── tests/
 │   ├── Makefile
 │   ├── test_sign.cpp
@@ -180,11 +187,14 @@ This codebase has been modernized from C++98 to C++17 with the following fixes:
 
 1. **Memory Safety**
    - RAII wrapper for `SignedDistance` class
+   - `gts::Surface` wrapper with `std::unique_ptr` ownership
+   - Template `GtsDeleter<T>` for automatic GTS object cleanup
    - `std::unique_ptr` and `std::vector` for automatic cleanup
    - Overflow-safe mesh size allocation
 
 2. **Undefined Behavior Fixes**
    - Safe `sign()` function using `std::copysign` (no division by zero)
+   - Division by zero protection in `cpt_point_angle()` with epsilon check
    - File I/O error handling with NULL checks
    - Proper exception handling
 
@@ -192,7 +202,8 @@ This codebase has been modernized from C++98 to C++17 with the following fixes:
    - Const correctness for utility functions
    - `noexcept` for simple functions
    - Proper include guards
-   - Removed dead code
+   - Removed dead code and declarations
+   - Clean compile with `-Werror`
 
 ### Supported Input Formats
 

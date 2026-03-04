@@ -45,7 +45,8 @@ int main() {
     try {
         // Use runtime value to prevent compile-time optimization
         volatile size_t big = std::numeric_limits<size_t>::max();
-        safe_mesh_size(big, 2, 1);
+        size_t result = safe_mesh_size(big, 2, 1);  // Should throw
+        (void)result;  // Suppress unused variable warning
     } catch (const std::overflow_error&) {
         caught = true;
     }
